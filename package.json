@@ -9,27 +9,37 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@hookform/resolvers": "^3.1.1",
-    "@radix-ui/react-label": "^2.0.2",
-    "@radix-ui/react-slot": "^1.0.2",
+    "@hookform/resolvers": "^3.10.0",
+    "@prisma/client": "^6.16.3",
+    "@radix-ui/react-label": "^2.1.7",
+    "@radix-ui/react-slot": "^1.2.3",
     "@types/node": "20.4.5",
     "@types/react": "18.2.17",
     "@types/react-dom": "18.2.7",
     "autoprefixer": "10.4.14",
+    "axios": "^1.12.2",
+    "bcrypt": "^6.0.0",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
     "eslint": "8.45.0",
     "eslint-config-next": "13.4.12",
     "lucide-react": "^0.263.1",
-    "next": "13.4.12",
+    "next": "^15.5.4",
+    "next-auth": "^5.0.0-beta.29",
+    "nodemailer": "^6.10.1",
     "postcss": "8.4.27",
     "react": "18.2.0",
     "react-dom": "18.2.0",
-    "react-hook-form": "^7.45.2",
+    "react-hook-form": "^7.64.0",
     "tailwind-merge": "^1.14.0",
     "tailwindcss": "3.3.3",
     "tailwindcss-animate": "^1.0.6",
     "typescript": "5.1.6",
-    "zod": "^3.21.4"
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcrypt": "^6.0.0",
+    "@types/nodemailer": "^7.0.2",
+    "prisma": "^6.16.3"
   }
 }
