@@ -19,6 +19,7 @@ import { signIn } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { Role } from '@prisma/client';
 
 const FormSchema = z.object({
   login: z.string().min(1, 'Email or username is required'),
@@ -46,20 +47,49 @@ const SignInForm = () => {
     setError('');
 
     try {
+      // sign in user
       const result = await signIn('credentials', {
-        login: values.login, // Send as 'login' instead of 'email'
+        login: values.login,
         password: values.password,
         redirect: false,
-        callbackUrl,
       });
 
       if (result?.error) {
         setError('Invalid email/username or password');
-      } else {
-        router.push(callbackUrl);
-        router.refresh();
+        setLoading(false);
+        return;
       }
+
+      // fetch user role from API or session after login
+      const userResponse = await fetch('/api/auth/me'); // endpoint returns user data
+      const user = await userResponse.json();
+
+      if (user?.role) {
+        // Capitalize first letter of role for UI if needed
+        const role = user.role;
+
+        // Redirect by role
+        switch (role.toUpperCase()) {
+          case Role.ADMIN:
+            router.push('/admin');
+            break;
+          case Role.STAFF:
+            router.push('/staff');
+            break;
+          case Role.AGENT:
+            router.push('/agent');
+            break;
+          default:
+            router.push(callbackUrl || '/dashboard');
+            break;
+        }
+      } else {
+        router.push(callbackUrl || '/dashboard');
+      }
+
+      router.refresh();
     } catch (error) {
+      console.error(error);
       setError('Something went wrong. Please try again.');
     } finally {
       setLoading(false);
@@ -123,7 +153,6 @@ const SignInForm = () => {
           />
         </div>
 
-        {/* Forgot Password Link */}
         <div className="text-right mt-2">
           <Link 
             href="/forgot-password" 

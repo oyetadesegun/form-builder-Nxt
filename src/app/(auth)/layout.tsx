@@ -1,11 +1,17 @@
-import { FC, ReactNode } from 'react';
+import Navbar from "@/components/Navbar";
+import { ReactNode } from "react";
 
-interface AuthLayoutProps {
-  children: ReactNode;
+export default function AuthLayout({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <div className="min-h-screen flex flex-col">
+        <Navbar />
+        <main className="flex-grow flex items-center justify-center p-4">
+          <div className="w-full max-w-md bg-white dark:bg-gray-900 shadow-md rounded-xl p-8">
+            {children}
+          </div>
+        </main>
+      </div>
+    </>
+  );
 }
-
-const AuthLayout: FC<AuthLayoutProps> = ({ children }) => {
-  return <div className='bg-slate-200 p-10 rounded-md'>{children}</div>;
-};
-
-export default AuthLayout;
