@@ -2,8 +2,8 @@
 
 import {
   Dialog, DialogContent, DialogHeader, DialogDescription, DialogTitle, DialogTrigger, DialogFooter,
-} from "./ui/dialog"
-import { Button } from "./ui/button"
+} from "../ui/dialog"
+import { Button } from "../ui/button"
 import { zodResolver } from "@hookform/resolvers/zod"
 import {
   Form,
@@ -12,11 +12,11 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form"
+} from "../ui/form"
 import { useForm } from "react-hook-form"
-import { Input } from "./ui/input"
-import { Textarea } from "./ui/textarea"
-import { Spinner } from "./ui/spinner"
+import { Input } from "../ui/input"
+import { Textarea } from "../ui/textarea"
+import { Spinner } from "../ui/spinner"
 import { toast } from "sonner"
 import { formSchema, FormSchemaType } from "@/schema/form"
 import { CreateForm } from "@/actions/form"

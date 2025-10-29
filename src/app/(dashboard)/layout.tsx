@@ -2,11 +2,12 @@ import Logo from "@/components/Logo";
 import { ThemeProvider } from "@/components/provider/ThemeProvider";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
 import { Toaster } from "sonner";
-import UserButton from "@/components/UserButton";
+import UserButton from "@/components/auth/UserButton";
 import { ReactNode } from "react";
+import DesignerContextProvider from "@/components/form/context/DesignerContext";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
-  return (
+  return (<DesignerContextProvider>
     <ThemeProvider
       attribute="class"
       defaultTheme="system"
@@ -27,5 +28,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <Toaster position="top-right" richColors closeButton />
       </div>
     </ThemeProvider>
+  </DesignerContextProvider>
   );
 }

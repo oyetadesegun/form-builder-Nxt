@@ -1,5 +1,5 @@
 import { GetFormCount, GetForms, GetFormStats } from "@/actions/form"
-import CreateFormBtn from "@/components/CreateFormBtn";
+import CreateFormBtn from "@/components/form/CreateFormBtn";
 import { NgnFn } from "@/components/CurrencyFormatter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
