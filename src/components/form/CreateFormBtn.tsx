@@ -120,7 +120,6 @@ const CreateFormBtn = () => {
                     <FormLabel>Agent Price</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
                         value={field.value ?? ""}
                         onChange={(e) =>
                           field.onChange(e.target.valueAsNumber || 0)
@@ -140,7 +139,6 @@ const CreateFormBtn = () => {
                     <FormLabel>User Price</FormLabel>
                     <FormControl>
                       <Input
-                        type="number"
                         value={field.value ?? ""}
                         onChange={(e) =>
                           field.onChange(e.target.valueAsNumber || 0)

@@ -96,3 +96,61 @@ export async function CreateForm(data: FormSchemaType) {
   console.log(`✅ Form created: ${newForm.name}`)
   return newForm
 }
+
+export async function UpdateFormContent(id: number,name:string, agentPrice: number, userPrice:number, jsonContent: string){
+    const user = await checkUser();
+
+    return await prisma.form.update({
+      where: {
+        userId: Number(user.id),
+        id
+      },
+      data:{
+        name:name,
+        agentPrice: agentPrice,
+        userPrice: userPrice,
+        content : jsonContent
+      }
+    })
+}
+
+export async function PublishForm(id: number){
+   const user = await checkUser();
+   return await prisma.form.update({
+    data:{
+      published: true,
+    },
+    where: {
+      userId : Number(user.id),
+      id
+    }
+   })
+}
+
+export async function GetFormContentByUrl(formUrl: string) {
+  // First find the form by shareURL
+  const form = await prisma.form.findFirst({
+    where: {
+      shareURL: formUrl
+    }
+  });
+  
+  if (!form) {
+    throw new Error("Form not found");
+  }
+  
+  // Then update using the unique ID
+  return await prisma.form.update({
+    select: {
+      content: true
+    },
+    data: {
+      visits: {
+        increment: 1
+      }
+    },
+    where: {
+      id: form.id
+    }
+  });
+}

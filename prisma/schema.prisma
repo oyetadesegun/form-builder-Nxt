@@ -11,64 +11,84 @@ datasource db {
 }
 
 model User {
-  id        Int       @id @default(autoincrement())
-  username  String    @unique
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
   names     String
-  email     String    @unique
-  phone     String    @unique
+  email     String   @unique
+  phone     String   @unique
   password  String
-  role      Role      @default(USER)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
   passwordResetTokens PasswordResetToken[]
   forms               Form[]
+
+  MaskUrl MaskUrl[]
 }
-enum Role{
+
+enum Role {
   ADMIN
   STAFF
   USER
   AGENT
-
 }
+
 model PasswordResetToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
-  userId    Int
-  expires   DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id      String   @id @default(cuid())
+  token   String   @unique
+  userId  Int
+  expires DateTime
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, token])
   @@map("password_reset_tokens")
 }
 
 model Form {
-  id          Int       @id @default(autoincrement())
-  userId      Int
-  user        User      @relation(fields: [userId], references: [id])
-  createdAt   DateTime  @default(now())
-  published   Boolean   @default(false)
-  name        String
-  description String    @default("")
-  agentPrice  Float @default(0)
-  userPrice   Float @default(0)
-  content     String    @default("[]")
-  visits Int @default(0)
-  submissions Int @default(0)
-  paymentCount  Int @default(0)
-   jobDone  Int @default(0)
-  amountGenerated Float @default(0)
-  shareURL String @default(uuid())
+  id              Int      @id @default(autoincrement())
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id])
+  createdAt       DateTime @default(now())
+  published       Boolean  @default(false)
+  name            String
+  description     String   @default("")
+  agentPrice      Float    @default(0)
+  userPrice       Float    @default(0)
+  content         String   @default("[]")
+  visits          Int      @default(0)
+  submissions     Int      @default(0)
+  paymentCount    Int      @default(0)
+  jobDone         Int      @default(0)
+  amountGenerated Float    @default(0)
+  shareURL        String   @unique @default(uuid())
 
   FormSubmission FormSubmission[]
+  MaskUrl        MaskUrl[]
+
   @@unique([name, userId])
 }
 
-model FormSubmission{
-  id Int @id @default(autoincrement())
+model MaskUrl {
+  id        String    @id @default(cuid())
+  code      String    @unique // 6–8 char unique code
+  formId    Int
+  form      Form      @relation(fields: [formId], references: [id], onDelete: Cascade)
+  userId    Int? // (optional: who paid for it)
+  user      User?     @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  expiresAt DateTime // e.g., +15min or +1hr
+  used      Boolean   @default(false)
+  usedAt    DateTime? // record when used
+
+  @@index([code])
+}
+
+model FormSubmission {
+  id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now())
-  formId Int
-  form Form @relation(fields: [formId], references: [id])
-  content String
+  formId    Int
+  form      Form     @relation(fields: [formId], references: [id])
+  content   String
 }

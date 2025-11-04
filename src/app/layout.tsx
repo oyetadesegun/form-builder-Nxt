@@ -4,6 +4,7 @@ import { Inter } from "next/font/google"
 import { ThemeProvider } from "@/components/provider/ThemeProvider"
 import NextAuthSessionProvider from "@/components/provider/SessionProvider"
 import Navbar from "@/components/Navbar"
+import NextTopLoader from 'nextjs-toploader'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -21,6 +22,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
         <NextAuthSessionProvider>
+          <NextTopLoader/>
           {children}
         </NextAuthSessionProvider>
       </body>

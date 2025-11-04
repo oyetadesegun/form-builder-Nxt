@@ -85,7 +85,7 @@ interface StatsCardProps {
   loading: boolean,
   className: string
 }
-function StatsCard({ icon, title, helperText, value, loading, className }: StatsCardProps) {
+export function StatsCard({ icon, title, helperText, value, loading, className }: StatsCardProps) {
   return (<Card className={className}>
     <CardHeader className="flex flex-row items-center justify-between pb-2">
       <CardTitle className="text-sm font-medium text-muted-foreground">{title}</CardTitle>
