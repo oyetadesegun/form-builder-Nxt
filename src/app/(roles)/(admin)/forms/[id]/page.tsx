@@ -1,10 +1,14 @@
-import { GetFormById } from "@/actions/form"
+import { GetFormById, GetFormWithSubmissions } from "@/actions/form"
 import FormBuilder from "@/components/form/FormBuilder"
 import FormLinkShare from "@/components/form/FormLinkShare"
 import VisitBtn from "@/components/form/VisitBtn"
 import { StatsCard } from "../../admin/page"
 import { NgnFn } from "@/components/CurrencyFormatter";
 import { Book, BookOpenCheck, Users, TicketCheck, User2, Wallet, Pencil, ShoppingCart, CheckCheck, ArrowRight, SquarePen } from "lucide-react";
+import { ElementsType, FormElementInstance } from "@/components/form/FormElements"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { formatDistance } from "date-fns"
+import { ReactNode } from "react"
 
 
 export default async function FormDetailPage({ params }: {
@@ -12,6 +16,7 @@ export default async function FormDetailPage({ params }: {
         id: string
     }
 }) {
+
     const { id } = await params
     const form = await GetFormById(parseInt(id))
     if (!form)
@@ -62,13 +67,87 @@ export default async function FormDetailPage({ params }: {
                 className="shadow-md shadow-blue-600" />
         </div>
         <div className="container pt-10">
-            <SubmissionsTable id={form.id}/>
+            <SubmissionsTable id={form.id} />
         </div>
     </>
 }
 
-function SubmissionsTable({id}:{id:number}){
+type Row = {[key: string]: string} & {
+    submittedAt: Date;
+}
+async function SubmissionsTable({ id }: { id: number }) {
+    const form = await GetFormWithSubmissions(id)
+    if (!form) { throw new Error("form not found") }
+    const FormElements = JSON.parse(form.content) as FormElementInstance[];
+    const columns: {
+        id: string;
+        label: string;
+        required: boolean;
+        type: ElementsType
+    }[] = [];
+    FormElements.forEach(element => {
+        switch (element.type) {
+            case "TextField":
+                columns.push(
+                    {
+                        id: element.id,
+                        label: element.extraAttributes?.label,
+                        required: element.extraAttributes?.required,
+                        type: element.type
+                    }
+                );
+                break;
+                default:
+                    break;
+        }
+    })
+    const rows: Row[] =[];
+    form.FormSubmission.forEach(submission =>{
+        const content = JSON.parse(submission.content)
+        rows.push({
+            ...content,
+            submittedAt:submission.createdAt
+        })
+    })
     return <>
-    <h1 className="text-2xl font-bold my-4">Submissions</h1>
+        <h1 className="text-2xl font-bold my-4">Submissions</h1>
+        <div className="rounded-md border">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        {columns.map(column =>(
+                            <TableHead key={column.id}>{column.label}</TableHead>
+                        ))}
+                        <TableHead className="text-muted-foreground text-right uppercase">Submitted at</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                        {
+                            rows.map((row, index) =>(
+                                <TableRow key={index}>
+                                    {columns.map(column =>(
+                                        <RowCell key={column.id} type={column.type} value={row[column.id]}/>
+                                    ))}
+                                    <TableCell className="text-muted-foreground text-right">
+                                        {formatDistance(row.submittedAt, new Date(), {addSuffix: true})}
+                                    </TableCell>
+                                </TableRow>
+                            ))
+                        }
+                </TableBody>
+            </Table>
+        </div>
     </>
+}
+
+function RowCell({ type, value}:{type: ElementsType; value: string}){
+    let node: ReactNode = value;
+    switch(type){
+        case "TextField":
+            if(!value) break;
+            
+    }
+    return <TableCell>
+        {node}
+    </TableCell>
 }

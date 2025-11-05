@@ -5,50 +5,62 @@ import { prisma } from "@/lib/prisma"
 import { formSchema, FormSchemaType } from "@/schema/form"
 
 //
-// 🔹 Helper to ensure the user is authenticated
+// 🔹 FIXED: Helper to ensure the user is authenticated and exists in DB
 //
 async function checkUser() {
   const session = await auth()
-  if (!session?.user) {
+  if (!session?.user?.email) {
     throw new Error("User not authenticated")
   }
-  return session.user
-}
-export async function GetForms(){
-    const user = await checkUser();
-    return await prisma.form.findMany({
-        where:{
-            userId : parseInt(user.id)
-        },
-        orderBy:{
-            createdAt: "desc"
-        }
-    })
-}
-export async function GetFormById(id: number){
-   const user = await checkUser()
-  return await prisma.form.findUnique({
-    where:{id: id}
+
+  // Verify user exists in database
+  const dbUser = await prisma.user.findUnique({
+    where: { 
+      email: session.user.email 
+    }
   })
+
+  if (!dbUser) {
+    throw new Error("User not found in database")
+  }
+
+  return dbUser
 }
-//
-// 🔹 Get total number of forms by the authenticated user
-//
-export async function GetFormCount() {
-  const user = await checkUser()
-  return prisma.form.count({
-    where: { userId: Number(user.id) },
+
+export async function GetForms(){
+  const user = await checkUser();
+  return await prisma.form.findMany({
+    where: {
+      userId: user.id // No need to parse, it's already a number
+    },
+    orderBy: {
+      createdAt: "desc"
+    }
   })
 }
 
-//
-// 🔹 Get aggregated statistics for the user's forms
-//
+export async function GetFormById(id: number){
+  const user = await checkUser()
+  return await prisma.form.findUnique({
+    where: { 
+      id: id,
+      userId: user.id // Ensure user can only access their own forms
+    }
+  })
+}
+
+export async function GetFormCount() {
+  const user = await checkUser()
+  return prisma.form.count({
+    where: { userId: user.id },
+  })
+}
+
 export async function GetFormStats() {
   const user = await checkUser()
 
   const stats = await prisma.form.aggregate({
-    where: { userId: Number(user.id) },
+    where: { userId: user.id },
     _sum: {
       visits: true,
       submissions: true,
@@ -58,7 +70,6 @@ export async function GetFormStats() {
     },
   })
 
-  // ✅ Safely handle potential null values from Prisma aggregates
   const sum = stats._sum ?? {}
   const visits = sum.visits ?? 0
   const submissions = sum.submissions ?? 0
@@ -73,7 +84,7 @@ export async function GetFormStats() {
 }
 
 //
-// 🔹 Create a new form for the authenticated user
+// 🔹 FIXED: Create form with verified user ID
 //
 export async function CreateForm(data: FormSchemaType) {
   const validation = formSchema.safeParse(data)
@@ -89,46 +100,47 @@ export async function CreateForm(data: FormSchemaType) {
       description: data.description || "",
       agentPrice: data.agentPrice,
       userPrice: data.userPrice,
-      userId: Number(user.id),
+      userId: user.id, // This is now a verified database user ID
     },
   })
 
-  console.log(`✅ Form created: ${newForm.name}`)
+  console.log(`✅ Form created: ${newForm.name} for user ${user.id}`)
   return newForm
 }
 
-export async function UpdateFormContent(id: number,name:string, agentPrice: number, userPrice:number, jsonContent: string){
-    const user = await checkUser();
+export async function UpdateFormContent(id: number, name: string, agentPrice: number, userPrice: number, jsonContent: string) {
+  const user = await checkUser();
 
-    return await prisma.form.update({
-      where: {
-        userId: Number(user.id),
-        id
-      },
-      data:{
-        name:name,
-        agentPrice: agentPrice,
-        userPrice: userPrice,
-        content : jsonContent
-      }
-    })
+  return await prisma.form.update({
+    where: {
+      userId: user.id,
+      id
+    },
+    data: {
+      name: name,
+      agentPrice: agentPrice,
+      userPrice: userPrice,
+      content: jsonContent
+    }
+  })
 }
 
-export async function PublishForm(id: number){
-   const user = await checkUser();
-   return await prisma.form.update({
-    data:{
+export async function PublishForm(id: number) {
+  const user = await checkUser();
+
+  return await prisma.form.update({
+    data: {
+      
       published: true,
     },
     where: {
-      userId : Number(user.id),
+      userId: user.id,
       id
     }
-   })
+  })
 }
 
 export async function GetFormContentByUrl(formUrl: string) {
-  // First find the form by shareURL
   const form = await prisma.form.findFirst({
     where: {
       shareURL: formUrl
@@ -139,7 +151,6 @@ export async function GetFormContentByUrl(formUrl: string) {
     throw new Error("Form not found");
   }
   
-  // Then update using the unique ID
   return await prisma.form.update({
     select: {
       content: true
@@ -153,4 +164,35 @@ export async function GetFormContentByUrl(formUrl: string) {
       id: form.id
     }
   });
+}
+
+export async function SubmitForm(formUrl: string,content:string){
+return await prisma.form.update({
+  data:{
+    submissions: {
+      increment: 1
+    },
+    FormSubmission:{
+      create:{
+        content
+      }
+    }
+  },
+  where:{
+    shareURL : formUrl,
+    published: true
+  }
+})
+}
+export async function GetFormWithSubmissions(id:number){
+    const user = await checkUser();
+    return prisma.form.findUnique({
+      where:{
+        id,
+        userId: user.id
+      },
+      include: {
+        FormSubmission: true
+      }
+    })
 }
