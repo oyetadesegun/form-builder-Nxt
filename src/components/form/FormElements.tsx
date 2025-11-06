@@ -1,17 +1,31 @@
 import React from "react";
+import { NumberFieldFormElement } from "./fields/NumberField";
+import { TitleFieldFormElement } from "./fields/TitleField";
+import { SubTitleFieldFormElement } from "./fields/SubTitleField";
+import { ParagraphFieldFormElement } from "./fields/ParagraphField";
+import { SeparatorFieldFormElement } from "./fields/SeparatorField";
+import { SpacerFieldFormElement } from "./fields/SpacerField";
 import { TextFieldFormElement } from "./fields/TextField";
 
-export type SubmitFunction = (key: string, value:string) => void;
+export type SubmitFunction = (key: string, value: string) => void;
 
-export type ElementsType = "TextField" | "TitleField";
-export type FormElement= {
-    type : ElementsType;
+export type ElementsType = 
+| "TextField" 
+| "TitleField" 
+| "SubTitleField" 
+| "ParagraphField"
+| "SeparatorField"
+| "SpacerField"
+| "NumberField"
+| "TextAreaField"
+export type FormElement = {
+    type: ElementsType;
     construct: (id: string) => FormElementInstance;
-    designerBtnElement:{
+    designerBtnElement: {
         icon: React.ElementType;
         label: string
     }
-    designerComponent:React.FC<{
+    designerComponent: React.FC<{
         elementInstance: FormElementInstance
     }>;
     formComponent: React.FC<{
@@ -32,8 +46,14 @@ export type FormElementInstance = {
     extraAttributes?: Record<string, any>;
 }
 type FormElementsType = {
-    [key in ElementsType] : FormElement;
+    [key in ElementsType]: FormElement;
 }
-export const FormElements:FormElementsType = {
+export const FormElements: FormElementsType = {
+    TitleField: TitleFieldFormElement,
+    SubTitleField: SubTitleFieldFormElement,
+    ParagraphField: ParagraphFieldFormElement,
+    SeparatorField: SeparatorFieldFormElement,
+    SpacerField: SpacerFieldFormElement,
+    NumberField: NumberFieldFormElement,
     TextField: TextFieldFormElement
-};
+    }
