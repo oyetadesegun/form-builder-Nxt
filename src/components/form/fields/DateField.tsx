@@ -2,10 +2,8 @@
 
 import React, { useEffect, useState } from "react"
 import { ElementsType, FormElement, FormElementInstance, SubmitFunction } from "../FormElements"
-import { MdTextFields } from "react-icons/md"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Slider } from "@/components/ui/slider"
 import { z } from "zod"
 import { cn } from "@/lib/utils"
 import { useForm } from "react-hook-form"
@@ -13,25 +11,25 @@ import { zodResolver } from "@hookform/resolvers/zod"
 import useDesigner from "../hooks/useDesigner"
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Switch } from "@/components/ui/switch"
-import { BsTextareaResize } from "react-icons/bs"
-import { Textarea } from "@/components/ui/textarea"
-const type: ElementsType = "TextAreaField"
+import { BsFillCalendarDateFill } from "react-icons/bs"
+import { Button } from "@/components/ui/button"
+import { CalendarIcon } from "@radix-ui/react-icons"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { format } from "date-fns"
+import { Calendar } from "@/components/ui/calendar"
+const type: ElementsType = "DateField"
 const extraAttributes = {
-    label: "Text area",
-    helperText: "",
+    label: "Date field",
+    helperText: "Pick a date",
     required: false,
-    placeHolder: "Value here...",
-    rows: 3,
 }
 const propertiesSchema = z.object({
     label: z.string().min(2).max(50),
     helperText: z.string().max(200),
     required: z.boolean().default(false),
-    placeHolder: z.string().max(50),
-    rows: z.number().min(1).max(10)
 
 });
-export const TextAreaFieldFormElement: FormElement = {
+export const DateFieldFormElement: FormElement = {
     type,
     construct: (id: string) => ({
         id,
@@ -39,15 +37,15 @@ export const TextAreaFieldFormElement: FormElement = {
         extraAttributes
     }),
     designerBtnElement: {
-        icon: BsTextareaResize,
-        label: "TextArea Field"
+        icon: BsFillCalendarDateFill,
+        label: "Date Field"
     },
     designerComponent: DesignerComponent,
     formComponent: FormComponent,
     propertiesComponent: PropertiesComponent,
     validate: (formElement: FormElementInstance, currentValue: string): boolean => {
         const element = formElement as CustomInstance;
-        if(element.extraAttributes.required){
+        if (element.extraAttributes.required) {
             return currentValue.length > 0;
         }
         return true;
@@ -61,39 +59,103 @@ type propertiesFormSchemaType = z.infer<typeof propertiesSchema>;
 
 function FormComponent({ elementInstance, submitValue, isInvalid, defaultValue }: { elementInstance: FormElementInstance, submitValue?: SubmitFunction, isInvalid?: boolean, defaultValue?: string }) {
     const element = elementInstance as CustomInstance;
-    const [value, setValue] = useState( defaultValue||"")
+    const [date, setDate] = useState<Date | undefined>(defaultValue ? new Date(defaultValue) : undefined)
     const [error, setError] = useState(false)
 
-    useEffect(()=>{
-        setError(isInvalid=== true)
-    },[isInvalid])
-    const { label, required, placeHolder, helperText,rows } = element.extraAttributes;
+    useEffect(() => {
+        setError(isInvalid === true)
+    }, [isInvalid])
+    const { label, required, placeHolder, helperText } = element.extraAttributes;
 
     return <div className="flex flex-col gap-2 w-full">
         <Label className={cn(error && "text-red-500")}>{label}
             {required && "*"}
         </Label>
-        <Textarea className={cn(error && "border-red-500")} rows={rows} placeholder={placeHolder} onChange={e => setValue(e.target.value)}
-            onBlur={(e) => {
-                if (!submitValue) return;
-                const valid = TextAreaFieldFormElement.validate(element, e.target.value)
-                setError(!valid)
-                if(!valid) return;
-                submitValue(element.id, e.target.value);
-            }}
-            value={value} />
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",
+                    !date && "text-muted-foreground",
+                    error && "border-red-500")}>
+                    <CalendarIcon className="mr-2 h-4 w-4 " />
+                    {date ? format(date, "PPP") : <span>Pick a date</span>}
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-4" align="start">
+  <div className="flex items-center justify-between mb-2">
+    {/* Month selector */}
+    <select
+      value={date ? date.getMonth() : new Date().getMonth()}
+      onChange={(e) => {
+        const newDate = new Date(
+          date?.getFullYear() ?? new Date().getFullYear(),
+          Number(e.target.value),
+          date?.getDate() ?? 1
+        );
+        setDate(newDate);
+      }}
+      className="border rounded-md px-2 py-1 text-sm"
+    >
+      {[
+        "January","February","March","April","May","June",
+        "July","August","September","October","November","December",
+      ].map((m, i) => (
+        <option key={i} value={i}>{m}</option>
+      ))}
+    </select>
+
+    {/* Year input for fast navigation */}
+    <input
+      type="number"
+      placeholder="Year"
+      value={date ? date.getFullYear() : ""}
+      onChange={(e) => {
+        const year = Number(e.target.value);
+        if (year > 1900 && year <= new Date().getFullYear()) {
+          const newDate = new Date(year, date?.getMonth() ?? 0, date?.getDate() ?? 1);
+          setDate(newDate);
+        }
+      }}
+      className="w-20 border rounded-md px-2 py-1 text-sm text-center"
+    />
+  </div>
+
+  {/* Calendar grid itself */}
+  <Calendar
+    mode="single"
+    selected={date}
+    onSelect={(date) => {
+      setDate(date);
+      if (!submitValue) return;
+      const value = date?.toISOString() || "";
+      const valid = DateFieldFormElement.validate(element, value);
+      setError(!valid);
+      submitValue(element.id, value);
+    }}
+    month={date}
+    onMonthChange={(m) => setDate(m)}
+    captionLayout="dropdown" // this helps for keyboard month nav
+    fromYear={1900}
+    toYear={new Date().getFullYear()}
+    initialFocus
+  />
+</PopoverContent>
+
+        </Popover>
         {helperText && <p className={cn("text-muted-foreground text-[0.8rem]", error && "text-red-500")}>{helperText}</p>}
     </div>
 
 }
 function DesignerComponent({ elementInstance }: { elementInstance: FormElementInstance }) {
     const element = elementInstance as CustomInstance;
-    const { label, required, placeHolder, helperText} = element.extraAttributes;
+    const { label, required, placeHolder, helperText } = element.extraAttributes;
     return <div className="flex flex-col gap-2 w-full">
         <Label>{label}
             {required && "*"}
         </Label>
-        <Textarea readOnly disabled placeholder={placeHolder} />
+        <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+            <CalendarIcon className="mr-2 h-4 w-4 " />
+            <span>Pick a date</span>
+        </Button>
         {helperText && <p className="text-muted-foreground text-[0.8rem]">{helperText}</p>}
     </div>
 
@@ -113,23 +175,20 @@ function PropertiesComponent({
             label: element.extraAttributes.label,
             helperText: element.extraAttributes.helperText,
             required: element.extraAttributes.required,
-            placeHolder: element.extraAttributes.placeHolder,
-            rows: element.extraAttributes.rows
         }
     })
     useEffect(() => {
         form.reset(element.extraAttributes)
     }, [element, form]);
     function applyChanges(values: propertiesFormSchemaType) {
-        const { label, helperText, placeHolder, required, rows } = values
+        const { label, helperText, required } = values
         updateElement(element.id, {
             ...element,
             extraAttributes: {
                 label,
                 helperText,
-                placeHolder,
                 required,
-                rows
+
             }
         })
     }
@@ -156,25 +215,7 @@ function PropertiesComponent({
                         <FormMessage />
                     </FormItem>
                 )} />
-            <FormField
-                control={form.control}
-                name="placeHolder"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>
-                            PlaceHolder
-                        </FormLabel>
-                        <FormControl>
-                            <Input {...field} onKeyDown={e => {
-                                if (e.key === "Enter") e.currentTarget.blur()
-                            }} />
-                        </FormControl>
-                        <FormDescription>
-                            The placeholder of the field.
-                        </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )} />
+          
             <FormField
                 control={form.control}
                 name="helperText"
@@ -191,29 +232,6 @@ function PropertiesComponent({
                         <FormDescription>
                             The helpertext of the field.<br /> It will be displayed below the field
                         </FormDescription>
-                        <FormMessage />
-                    </FormItem>
-                )} />
-            <FormField
-                control={form.control}
-                name="rows"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>
-                            Rows {form.watch("rows")}
-                        </FormLabel>
-                        <FormControl>
-                            <Slider 
-                            defaultValue={[field.value]}
-                            min={1}
-                            max={10}
-                            step={1}
-                            onValueChange={value =>{
-                                field.onChange(value[0])
-                            }}
-                            />
-                        </FormControl>
-                        
                         <FormMessage />
                     </FormItem>
                 )} />
